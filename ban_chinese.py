@@ -77,14 +77,28 @@ def _compute_banned_token_ids(tokenizer) -> list[int]:
     Decoding every id is slower (one pass over the vocab at startup) but exact.
     """
     banned: list[int] = []
+    reverse = _byte_level_reverse_map()
     total = len(tokenizer)
     for token_id in range(total):
+        # (a) Ban any token whose decoded text contains a Han/CJK character.
         try:
             text = tokenizer.decode([token_id], skip_special_tokens=False)
         except Exception:
-            continue
+            text = ""
         if isinstance(text, str) and _contains_banned_char(text):
             banned.append(token_id)
+            continue
+
+        # (b) Ban any token carrying a UTF-8 lead byte for a multi-byte character.
+        # A Han character can be assembled from several byte-level tokens, and none of those
+        # fragments decodes to the character itself -- which is exactly how a character leaked
+        # through testing (`躺` arriving as ' cat 躺'). English is single-byte ASCII, so banning
+        # lead bytes costs nothing in English capability.
+        piece = tokenizer.convert_ids_to_tokens(token_id)
+        if isinstance(piece, str) and all(ch in reverse for ch in piece):
+            raw = bytes(reverse[ch] for ch in piece)
+            if any(0xE0 <= b <= 0xF4 for b in raw):
+                banned.append(token_id)
     return banned
 
 
