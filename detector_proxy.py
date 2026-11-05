@@ -37,8 +37,11 @@ def score_batch(model, tokenizer, texts, device):
     enc = tokenizer(texts, return_tensors="pt", truncation=True, max_length=512, padding=True).to(device)
     with torch.no_grad():
         logits = model(**enc).logits
-    probs = torch.softmax(logits.float(), dim=-1)[:, 1]  # index 1 = "Fake"
-    return probs.tolist()
+    probs = torch.softmax(logits.float(), dim=-1)
+    # Use the model's own label mapping rather than assuming an index: this checkpoint reports
+    # {0: 'Fake', 1: 'Real'}, which is the opposite of the obvious guess.
+    fake_idx = model.config.label2id.get("Fake", 0)
+    return probs[:, fake_idx].tolist()
 
 
 def main():
