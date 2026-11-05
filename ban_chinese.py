@@ -69,21 +69,21 @@ def _byte_level_reverse_map() -> dict[str, int]:
 
 
 def _compute_banned_token_ids(tokenizer) -> list[int]:
-    """Token ids whose decoded form contains a Han ideograph or CJK punctuation."""
-    reverse = _byte_level_reverse_map()
+    """Token ids whose decoded form contains a Han ideograph or CJK punctuation.
+
+    Uses the tokenizer's own decode for each id rather than reconstructing bytes from the
+    byte-level symbols: the reconstruction misses tokens whose piece mixes byte-level symbols
+    with already-decoded characters, which is how a Han character leaked through in testing.
+    Decoding every id is slower (one pass over the vocab at startup) but exact.
+    """
     banned: list[int] = []
-    for token_id in range(len(tokenizer.get_vocab())):
-        piece = tokenizer.convert_ids_to_tokens(token_id)
-        if not isinstance(piece, str):
+    total = len(tokenizer)
+    for token_id in range(total):
+        try:
+            text = tokenizer.decode([token_id], skip_special_tokens=False)
+        except Exception:
             continue
-        # Byte-level vocab: decode the synthetic symbols back to raw bytes.
-        decoded = piece
-        if all(ch in reverse for ch in piece):
-            try:
-                decoded = bytes(reverse[ch] for ch in piece).decode("utf-8", errors="ignore")
-            except Exception:
-                decoded = piece
-        if _contains_banned_char(decoded):
+        if isinstance(text, str) and _contains_banned_char(text):
             banned.append(token_id)
     return banned
 
