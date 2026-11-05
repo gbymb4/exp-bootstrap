@@ -113,7 +113,8 @@ class BanChineseLogitsProcessor(_Base):
         )
         self._banned_ids = torch.tensor(banned_ids, dtype=torch.long, device=device or "cpu")
 
-    def apply(self, logits: torch.Tensor) -> torch.Tensor:
+    def apply(self, logits: torch.Tensor, ctx=None) -> torch.Tensor:
+        # vLLM 0.32's v2 sampler calls apply(logits, ctx); older versions call apply(logits).
         ids = self._banned_ids.to(logits.device, non_blocking=True)
         logits[:, ids] = float("-inf")
         return logits
