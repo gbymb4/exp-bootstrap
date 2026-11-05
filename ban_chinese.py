@@ -120,11 +120,12 @@ class BanChineseLogitsProcessor(_Base):
         return logits
 
     # --- vLLM 0.32 hooks ---
-    # add_request must return a bool: vLLM does `needs_processing |= proc.add_request(...)`
-    # (sampler.py). Returning False means "no per-request work", which is correct here
-    # because the ban applies unconditionally to every request.
+    # add_request must return True: the sampler only calls apply() for requests whose
+    # needs_logits_processing flag is set, and that flag comes from this return value
+    # (sampler.py: `needs_processing |= processor.add_request(...)` then early-returns if
+    # nothing needs processing). Returning False silently disables the ban.
     def add_request(self, req_idx: int, sampling_params) -> bool:
-        return False
+        return True
 
     def apply_staged_writes(self, *args, **kwargs) -> None:
         pass
