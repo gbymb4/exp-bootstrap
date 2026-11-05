@@ -118,9 +118,12 @@ class BanChineseLogitsProcessor(_Base):
         logits[:, ids] = float("-inf")
         return logits
 
-    # --- vLLM 0.32 hooks (no-ops: the ban is unconditional) ---
-    def add_request(self, *args, **kwargs) -> None:
-        pass
+    # --- vLLM 0.32 hooks ---
+    # add_request must return a bool: vLLM does `needs_processing |= proc.add_request(...)`
+    # (sampler.py). Returning False means "no per-request work", which is correct here
+    # because the ban applies unconditionally to every request.
+    def add_request(self, req_idx: int, sampling_params) -> bool:
+        return False
 
     def apply_staged_writes(self, *args, **kwargs) -> None:
         pass
