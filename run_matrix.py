@@ -63,14 +63,15 @@ def wait_ready(timeout=420):
     return False
 
 
-def start_server(model, kv_dtype, log_path):
-    if os.path.isdir(model):
-        pass
+def start_server(model, kv_dtype, log_path, ban=True):
     args = [sys.executable, "-m", "vllm.entrypoints.openai.api_server",
             "--model", model, "--served-model-name", "base",
             "--max-model-len", "12288", "--max-num-seqs", "12",
             "--gpu-memory-utilization", "0.90",
             "--host", "127.0.0.1", "--port", str(PORT), "--api-key", KEY]
+    if ban:
+        # Production parity: every served request carries the Han-token ban.
+        args += ["--logits-processors", "ban_chinese:BanChineseLogitsProcessor"]
     if kv_dtype:
         args += ["--kv-cache-dtype", kv_dtype]
     if model == QUANT:
@@ -103,6 +104,7 @@ def main():
     ap.add_argument("--outdir", default=OUTDIR)
     ap.add_argument("--conditions", default="", help="comma-separated subset")
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--no-ban", action="store_true", help="serve without the Han-token ban")
     args = ap.parse_args()
 
     prompts = []
@@ -127,7 +129,7 @@ def main():
         print("== condition", name)
         kill_gpu()
         log_path = "/root/exp/vllm-{}.log".format(name)
-        start_server(model, kv, log_path)
+        start_server(model, kv, log_path, ban=not args.no_ban)
         if not wait_ready():
             print("FAILED to start", name, "see", log_path)
             kill_gpu()
