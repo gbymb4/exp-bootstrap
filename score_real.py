@@ -26,12 +26,15 @@ RUBRIC_DIR = "/root/exp/rubrics"
 
 # ----------------------------------------------------------------------------- detectors
 
+GPTZERO_VERSION = os.environ.get("GPTZERO_VERSION", "2026-11-04-base")
+
+
 def gptzero_score(text, key, timeout=120):
     resp = requests.post(
         "https://api.gptzero.me/v2/predict/text",
         headers={"x-api-key": key, "Accept": "application/json",
                  "Content-Type": "application/json"},
-        json={"document": text, "version": "2024-04-04", "multilingual": False},
+        json={"document": text, "version": GPTZERO_VERSION, "multilingual": False},
         timeout=timeout,
     )
     if resp.status_code != 200:
