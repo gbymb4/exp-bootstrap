@@ -180,6 +180,7 @@ def main():
         if args.limit:
             common = common[:args.limit]
         det_scores, judge_fid, judge_qual, errors = [], [], [], 0
+        det_by_id, fid_by_id, qual_by_id = {}, {}, {}
 
         for idx in common:
             rec = data[idx]
@@ -190,13 +191,16 @@ def main():
                     print("  detector error id={} {} {}".format(idx, status, detail))
                 else:
                     det_scores.append(score)
+                    det_by_id[str(idx)] = score
                 time.sleep(args.sleep)
             if args.judge:
                 verdict, err = judge_pair(base[idx]["prompt"], rec["output"], judge_key, args.judge_model)
                 if verdict and verdict.get("fidelity"):
                     judge_fid.append(verdict["fidelity"].get("overall_score"))
+                    fid_by_id[str(idx)] = verdict["fidelity"].get("overall_score")
                 if verdict and verdict.get("quality"):
                     judge_qual.append(verdict["quality"].get("overall_score"))
+                    qual_by_id[str(idx)] = verdict["quality"].get("overall_score")
                 if err and err != "; ":
                     errors += 1
                     print("  judge error id={} {}".format(idx, err))
@@ -208,6 +212,11 @@ def main():
             "detector_errors": errors if args.detector else 0,
             "judge_fidelity": summarise(judge_fid),
             "judge_quality": summarise(judge_qual),
+            # Per-example scores: the point of the exercise is paired deltas against the
+            # baseline, which needs each example's score rather than a summary.
+            "per_example_detector": det_by_id,
+            "per_example_fidelity": fid_by_id,
+            "per_example_quality": qual_by_id,
         }
         report[cond] = entry
         print("== {} ({} pairs)".format(cond, len(common)))
