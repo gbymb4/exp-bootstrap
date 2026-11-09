@@ -1,0 +1,69 @@
+{
+    "name": "llm_judge_writing_quality",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "overall_critique": {
+          "type": "string",
+          "description": "1-3 sentence overall critique of the writing quality."
+        },
+        "issues": {
+          "type": "object",
+          "description": "Mark true only if the issue is noticeable enough to meaningfully lower writing quality.",
+          "properties": {
+            "coherence": {
+              "type": "boolean",
+              "description": "Incoherent or nonsensical sentences or phrases."
+            },
+            "wording": {
+              "type": "boolean",
+              "description": "Unnatural phrasing, awkward wording, strange expressions, or incorrect terminology."
+            },
+            "clarity": {
+              "type": "boolean",
+              "description": "Problems with sentence clarity, structure, references, or tangled clauses."
+            },
+            "grammar": {
+              "type": "boolean",
+              "description": "Grammar, punctuation, spelling, agreement, or related mechanics problems."
+            },
+            "logic": {
+              "type": "boolean",
+              "description": "Misused connectors or weak local reasoning flow."
+            },
+            "substance": {
+              "type": "boolean",
+              "description": "Vague, generic, filler-heavy, or low-information writing."
+            },
+            "repetition": {
+              "type": "boolean",
+              "description": "Repeated phrasing, repeated patterns, duplicated content, or leftover/corrupted text."
+            }
+          },
+          "required": [
+            "coherence",
+            "wording",
+            "clarity",
+            "grammar",
+            "logic",
+            "substance",
+            "repetition"
+          ],
+          "additionalProperties": false
+        },
+        "overall_score": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Overall writing-quality score. 5 = fully usable, 4 = usable with minor issues, 3 = borderline usable, 2 = not usable, 1 = major failure."
+        }
+      },
+      "required": [
+        "overall_critique",
+        "issues",
+        "overall_score"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  }

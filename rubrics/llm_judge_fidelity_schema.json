@@ -1,0 +1,54 @@
+{
+  "name": "llm_judge_fidelity",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "overall_critique": {
+        "type": "string",
+        "description": "1-5 sentence overall critique of the rewrite's fidelity to the original."
+      },
+      "issues": {
+        "type": "object",
+        "description": "Mark true only if the issue is noticeable enough to meaningfully lower fidelity.",
+        "properties": {
+          "meaning_preservation": {
+            "type": "boolean",
+            "description": "Changed message, stance, intent, implications, certainty, scope, or takeaway."
+          },
+          "information_coverage": {
+            "type": "boolean",
+            "description": "Important points omitted, altered, or meaningfully added."
+          },
+          "factual_consistency": {
+            "type": "boolean",
+            "description": "Names, dates, numbers, quotes, links, attributions, key terms, or point of view changed."
+          },
+          "structural_similarity": {
+            "type": "boolean",
+            "description": "Meaningful change in form, organization, ordering, sectioning, or length."
+          }
+        },
+        "required": [
+          "meaning_preservation",
+          "information_coverage",
+          "factual_consistency",
+          "structural_similarity"
+        ],
+        "additionalProperties": false
+      },
+      "overall_score": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5,
+        "description": "Overall fidelity score. 5 = preserves the original well, 4 = mostly faithful with minor issues, 3 = borderline faithful, 2 = not faithful enough, 1 = major failure."
+      }
+    },
+    "required": [
+      "overall_critique",
+      "issues",
+      "overall_score"
+    ],
+    "additionalProperties": false
+  },
+  "strict": true
+}
